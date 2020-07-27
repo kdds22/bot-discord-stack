@@ -42,6 +42,7 @@ async def howto(ctx):
         Por enquanto só existe esses 2 (dois): \n
         **$ajuda** = Diz pra que eu sirvo; \n
         **$howto** = Mostra essa lista de comandos \n
+        **$opcoes** = Mostra uma lista das principais questões de algum tema do StackOverFlow e algumas especificidades\n\n
         **$rolar_dado** = Simula uma rolagem de dado, escolhendo a quantidade e o tipo de dado \n\n
         -->> tem o *$help*, mas ele é padrão... pode ignora-lo se desejar <<--
     '''
@@ -59,32 +60,29 @@ async def rolar(ctx, quantidade: int, lados: int):
     else: await ctx.send(', '.join(dado))
 
 
+#TODO: converter o &amp;
+#TODO: liberdade de escolher a pagina (questões anteriores/posteriores)
+@bot.command(name='opcoes', help='Mostra questionamentos sobre um tema\n- (params: [tema, palavrasChave]\n- Ex.: \'$opcoes python face-recognition,opencv\' )')
+async def opcoes(ctx, tema: str, params: str = ''):
+    tags = tema
+    if params != '':
+        spliteed = params.split(',')
+        for x in spliteed:
+            tags += ';'+x
+    SITE = StackAPI('stackoverflow')
+    questions = SITE.fetch('questions', sort='activity', tagged=tags)
+    #print(len(questions['items']))
+    response = 'Total: '+str(len(questions['items']))+'\nMostrando os primeiros resultados...\n\n'
+    count = 0
+    for x in questions['items']:
+        if count >= 10:
+            break
+        response += str(x['title']).replace('&#39;','\'')+' >> id: ' + str(x['question_id']) + '\n\n'
+        #print(str(x['title']).replace('&#39;','\'')+' >> id: ' + str(x['question_id']))
+        count += 1
+
+    await ctx.send(response)
+
+
+
 bot.run(TOKEN)
-
-
-'''
-@client.event
-async def on_ready():
-    print(f'{client.user.name} entrou no Discord!!')
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    
-    stack_bot_respostas = [
-        'Pergunta qualquer coisa ai, talvez eu ajude!',
-        'Não consegue né Moisés? Pergunta ai.',
-        'Ta com medinho? Pediu arrego? É so me chamar.',
-        'Preguiça o nome disso né? Pergunte logo!'
-    ]
-
-    if message.content == 'vish!':
-        response = random.choice(stack_bot_respostas)
-        await message.channel.send(response)
-    elif message.content == 'raise-exception':
-        raise discord.DiscordException
-
-
-client.run(TOKEN)
-'''
